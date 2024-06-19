@@ -39,7 +39,7 @@ jobs:
         password: ${{ secrets.ACR_REGISTRY_PASSWORD }}
 
     - name: Build docker image
-      run: docker build SongService/ -t respotify.azurecr.io/blob-handler
+      run: docker build . -t respotify.azurecr.io/blob-handler
 
     - name: Deploy
       run: docker push respotify.azurecr.io/blob-handler
