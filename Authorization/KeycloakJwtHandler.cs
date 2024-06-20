@@ -5,9 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace BlobHandler.Authorization;
 
-public class KeycloakJwtHandler(ILogger<KeycloakJwtHandler> logger) : IKeycloakJwtHandler
+public class KeycloakJwtHandler(ILogger<KeycloakJwtHandler> logger, EnvironmentVariableManager envManager) : IKeycloakJwtHandler
 {
-    private TokenValidationParameters _tokenValidationParameters = new TokenValidationParameters
+    private readonly TokenValidationParameters _tokenValidationParameters = new()
     {
         ValidateIssuerSigningKey = true,
         ValidateIssuer = false,
@@ -43,8 +43,7 @@ public class KeycloakJwtHandler(ILogger<KeycloakJwtHandler> logger) : IKeycloakJ
     {
         var handler = new HttpClientHandler();
         var httpClient = new HttpClient(handler);
-        var jwksUrl = Environment.GetEnvironmentVariable("KC_JWKS_URL")
-            ?? throw new ArgumentNullException("KC_JWKS_URL");
+        var jwksUrl = envManager["KC_JWKS_URL"];
 
         var response = await httpClient.GetAsync(jwksUrl);
         response.EnsureSuccessStatusCode();

@@ -1,23 +1,40 @@
 using BlobHandler;
 using BlobHandler.Authorization;
-using Microsoft.AspNetCore.Cors.Infrastructure;
+using BlobHandler.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+var requiredVariables = new List<string>
+{
+    "AZURE_STORAGE_ACCOUNT_NAME",
+    "AZURE_STORAGE_ACCOUNT_KEY",
+    "AZURE_STORAGE_CONTAINER_NAME",
+
+    "RABBITMQ_HOSTNAME",
+    "RABBITMQ_USERNAME",
+    "RABBITMQ_PASSWORD",
+
+    "ALLOWED_ORIGINS",
+    "REDIRECT_URI",     // For redirects to resources
+    "KC_JWKS_URL",      // To validate tokens from keycloak
+};
+
+var envManager = new EnvironmentVariableManager(requiredVariables);
+builder.Services.AddSingleton(envManager);
 
 // Logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-// max body request size
+// Set an upper bound for uploading blobs
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.Limits.MaxRequestBodySize = 25 * 1024000; // 25MB
 });
 
+
 // CORS
-string[] allowedOrigins = GetEnvVar("ALLOWED_ORIGINS").Split(',');
+string[] allowedOrigins = envManager["ALLOWED_ORIGINS"].Split(',');
 string corsPolicy = "frontend";
 builder.Services.AddCors(options =>
 {
@@ -30,22 +47,10 @@ builder.Services.AddCors(options =>
         });
 });
 
+builder.Services.AddControllers();
 
-static string GetEnvVar(string name)
-{
-    return Environment.GetEnvironmentVariable(name)
-        ?? throw new Exception($"Environment variable {name} is not set.");
-}
-string accountName   = GetEnvVar("AZURE_STORAGE_ACCOUNT_NAME");
-string accountKey    = GetEnvVar("AZURE_STORAGE_ACCOUNT_KEY");
-string containerName = GetEnvVar("AZURE_STORAGE_CONTAINER_NAME");
-string _             = GetEnvVar("REDIRECT_URI"); // For redirects to resources
-string __            = GetEnvVar("KC_JWKS_URL"); // To validate tokens from keycloak
-
-var connectionString = $"DefaultEndpointsProtocol=https;AccountName={accountName};AccountKey={accountKey};EndpointSuffix=core.windows.net";
-
-// Services
-builder.Services.AddSingleton<IAzureBlobService>(new AzureBlobService(connectionString, containerName));
+builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
+builder.Services.AddSingleton<IEventPublisher, EventPublisher>();
 builder.Services.AddSingleton<IKeycloakJwtHandler, KeycloakJwtHandler>();
 
 var app = builder.Build();

@@ -7,24 +7,39 @@ public class AuthMiddleware(RequestDelegate next, IKeycloakJwtHandler keycloakJw
 {
     public async Task Invoke(HttpContext context)
     {
-        if (context.Request.Headers.TryGetValue("Authorization", out var authorization))
-        {
-            JsonWebToken token;
-            try
-            {
-                token = new JsonWebToken(authorization[0]![7..]);
-            }
-            catch
-            {
-                context.Response.Clear();
-                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                await context.Response.WriteAsync("Malformed token.");
-                return;
-            }
+        JsonWebToken? jwt = null;
 
-            if (await keycloakJwtHandler.IsValidJWT(token))
+        // Either get the token from the Authorization header
+        context.Request.Headers.TryGetValue("Authorization", out var authorization);
+
+        // Or from the query parameter
+        // This is helpful in case the headers cannot be modified, e.g., HTML <audio> tag
+        var token = context.Request.Query["token"];
+
+        try
+        {
+            if (authorization.Count == 1)
             {
-                context.Items["roles"] = keycloakJwtHandler.GetRoles(token);
+                jwt = new JsonWebToken(authorization[0]![7..]);
+            }
+            else if (token.Count == 1)
+            {
+                jwt = new JsonWebToken(token[0]);
+            }
+        }
+        catch
+        {
+            context.Response.Clear();
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            await context.Response.WriteAsync("Malformed token.");
+            return;
+        }
+
+        if(jwt != null)
+        {
+            if (await keycloakJwtHandler.IsValidJWT(jwt))
+            {
+                context.Items["roles"] = keycloakJwtHandler.GetRoles(jwt);
             }
             else
             {

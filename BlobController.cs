@@ -8,16 +8,16 @@ namespace BlobHandler;
 [ApiController]
 [Route("")]
 [Allow("administrator")]
-public class BlobController(IAzureBlobService blobService, ILogger<BlobController> logger) : ControllerBase
+public class BlobController(IAzureBlobService blobService, ILogger<BlobController> logger, EnvironmentVariableManager envManager) : ControllerBase
 {
     [HttpGet]
     public IActionResult FetchBlobs()
     {
-        var redirectUri = Environment.GetEnvironmentVariable("REDIRECT_URI")!;
+        var redirectUri = envManager["REDIRECT_URI"];
 
         var names = blobService.FetchBlobNames();
 
-        return Ok(names.Select(name => Uri.EscapeUriString($"{redirectUri}/{name}")));
+        return Ok(names.Select(name => redirectUri + '/' + Uri.EscapeDataString(name)));
     }
 
     [HttpGet("{name}")]
@@ -77,7 +77,7 @@ public class BlobController(IAzureBlobService blobService, ILogger<BlobControlle
             };
         }
 
-        string redirectUri = Environment.GetEnvironmentVariable("REDIRECT_URI")!;
+        string redirectUri = envManager["REDIRECT_URI"];
 
         var uriBuilder = new UriBuilder(redirectUri)
         {
