@@ -8,6 +8,7 @@ on:
 
 jobs:
   analyze:
+    name: Static code analysis
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
@@ -39,6 +40,7 @@ jobs:
          args: --file=BlobHandler.sln
 
   deploy:
+    name: Deployment
     needs: [vulnerability-scan, analyze]
     runs-on: ubuntu-latest
     defaults:
@@ -62,6 +64,7 @@ jobs:
       run: docker push respotify.azurecr.io/blob-handler
 
   update-service:
+    name: Restart services
     needs: deploy
     runs-on: ubuntu-latest
     steps:
