@@ -20,7 +20,7 @@ string containerName = GetEnvVar("AZURE_STORAGE_CONTAINER_NAME");
 string _             = GetEnvVar("REDIRECT_URI"); // For redirects to resources
 string __            = GetEnvVar("KC_JWKS_URL"); // To validate tokens from keycloak
 
-var connectionString = $"DefaultEndpointsProtocol=https;AccountName={accountName};AccountKey={accountKey};EndpointSuffix=core.windows.net";
+var connectionString = $"DefaultEndpointsProtocol=http;AccountName={accountName};AccountKey={accountKey};EndpointSuffix=core.windows.net";
 
 // Services
 builder.Services.AddSingleton<IAzureBlobService>(new AzureBlobService(connectionString, containerName));
