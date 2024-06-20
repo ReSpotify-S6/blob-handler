@@ -1,5 +1,6 @@
 using BlobHandler;
 using BlobHandler.Authorization;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,27 @@ builder.Services.AddControllers();
 // Logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+
+// max body request size
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 25 * 1024000; // 25MB
+});
+
+// CORS
+string[] allowedOrigins = GetEnvVar("ALLOWED_ORIGINS").Split(',');
+string corsPolicy = "frontend";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        name: corsPolicy,
+        policy => {
+            policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+        });
+});
+
 
 static string GetEnvVar(string name)
 {
@@ -27,6 +49,8 @@ builder.Services.AddSingleton<IAzureBlobService>(new AzureBlobService(connection
 builder.Services.AddSingleton<IKeycloakJwtHandler, KeycloakJwtHandler>();
 
 var app = builder.Build();
+
+app.UseCors(corsPolicy);
 
 app.MapControllers();
 

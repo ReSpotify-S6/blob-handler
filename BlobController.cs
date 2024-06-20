@@ -6,7 +6,7 @@ using System.Net;
 namespace BlobHandler;
 
 [ApiController]
-[Route("/")]
+[Route("")]
 [Allow("administrator")]
 public class BlobController(IAzureBlobService blobService, ILogger<BlobController> logger) : ControllerBase
 {
