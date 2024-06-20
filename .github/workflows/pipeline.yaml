@@ -1,4 +1,3 @@
-
 name: Blob handler pipeline
 
 on:
@@ -22,31 +21,25 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   vulnerability-scan:
+    name: Vulnerability scan
     runs-on: ubuntu-latest
-    needs: analyze
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      
-      - name: Install Snyk CLI
-        run: npm install -g snyk  # Install Snyk CLI globally
-
-      - name: Authenticate with Snyk
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: npx snyk auth $SNYK_TOKEN
-      
-      - name: Run Snyk security scan
-        run: npx snyk test --json > snyk-output.json
-      
-      - name: Upload Snyk results
-        uses: actions/upload-artifact@v2
-        with:
-          name: snyk-results
-          path: snyk-output.json
+    - uses: actions/checkout@master
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/dotnet@master
+      env:
+         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+         args: --file=BlobHandler.sln
 
   deploy:
-    needs: vulnerability-scan
+    needs: [vulnerability-scan, analyze]
     runs-on: ubuntu-latest
     defaults:
       run:
