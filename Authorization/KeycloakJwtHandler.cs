@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace BlobHandler.Authorization;
 
-public class KeycloakJwtHandler : IKeycloakJwtHandler
+public class KeycloakJwtHandler(ILogger<KeycloakJwtHandler> logger) : IKeycloakJwtHandler
 {
     private TokenValidationParameters _tokenValidationParameters = new TokenValidationParameters
     {
@@ -21,6 +21,11 @@ public class KeycloakJwtHandler : IKeycloakJwtHandler
         _tokenValidationParameters.IssuerSigningKeys ??= await FetchKeysAsync();
 
         var result = await tokenHandler.ValidateTokenAsync(token, _tokenValidationParameters);
+        
+        if (!result.IsValid)
+        {
+            logger.LogWarning("Token invalidated: {}", result.Exception);
+        }
 
         return result.IsValid;
     }
