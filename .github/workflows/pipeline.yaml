@@ -60,9 +60,9 @@ jobs:
         run: az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_CLUSTER_NAME }} --overwrite-existing
 
       - name: Restart image service deployment
-        run: kubectl rollout restart deployment/image-service
+        run: kubectl rollout restart deployment/image-service -n ingress-nginx
         continue-on-error: true 
 
       - name: Restart audio service deployment
-        run: kubectl rollout restart deployment/audio-service
+        run: kubectl rollout restart deployment/audio-service -n ingress-nginx
         continue-on-error: true 
