@@ -8,13 +8,11 @@ public class EventPublisher : IDisposable, IEventPublisher
 {
     private readonly IConnection _connection;
 
-    private readonly EnvironmentVariableManager _envManager;
-
-    public EventPublisher(EnvironmentVariableManager envManager)
+    public EventPublisher(IReadOnlyDictionary<string, string> envStore, ILogger<EventPublisher> logger)
     {
-        var hostname = envManager["RABBITMQ_HOSTNAME"];
-        var username = envManager["RABBITMQ_USERNAME"];
-        var password = envManager["RABBITMQ_PASSWORD"];
+        var hostname = envStore["RABBITMQ_HOSTNAME"];
+        var username = envStore["RABBITMQ_USERNAME"];
+        var password = envStore["RABBITMQ_PASSWORD"];
 
         var factory = new ConnectionFactory
         {
@@ -22,9 +20,21 @@ public class EventPublisher : IDisposable, IEventPublisher
             UserName = username,
             Password = password
         };
-
-        _connection = factory.CreateConnection();
-        _envManager = envManager;
+        
+        while (true)
+        {
+            try
+            {
+                _connection = factory.CreateConnection();
+                break;
+            }
+            catch(Exception ex)
+            {
+                logger.LogError(ex.Message);
+                logger.LogInformation("Retrying to connect to RabbitMQ in 5 seconds...");
+                Thread.Sleep(5000);
+            }
+        }
     }
 
     public void Publish<T>(string topic, T data)

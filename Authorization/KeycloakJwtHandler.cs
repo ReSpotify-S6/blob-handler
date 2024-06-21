@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace BlobHandler.Authorization;
 
-public class KeycloakJwtHandler(ILogger<KeycloakJwtHandler> logger, EnvironmentVariableManager envManager) : IKeycloakJwtHandler
+public class KeycloakJwtHandler(ILogger<KeycloakJwtHandler> logger, IReadOnlyDictionary<string, string> envStore) : IKeycloakJwtHandler
 {
     private readonly TokenValidationParameters _tokenValidationParameters = new()
     {
@@ -43,7 +43,7 @@ public class KeycloakJwtHandler(ILogger<KeycloakJwtHandler> logger, EnvironmentV
     {
         var handler = new HttpClientHandler();
         var httpClient = new HttpClient(handler);
-        var jwksUrl = envManager["KC_JWKS_URL"];
+        var jwksUrl = envStore["KC_JWKS_URL"];
 
         var response = await httpClient.GetAsync(jwksUrl);
         response.EnsureSuccessStatusCode();

@@ -10,24 +10,25 @@ public class AzureBlobService : IAzureBlobService
 {
     private readonly BlobContainerClient _containerClient;
     private readonly IEventPublisher _eventPublisher;
-    private readonly EnvironmentVariableManager _envManager;
+    private readonly IReadOnlyDictionary<string, string> _envStore;
+    private readonly ILogger _logger;
 
-    public AzureBlobService(IEventPublisher publisher, EnvironmentVariableManager envManager)
+    public AzureBlobService(IEventPublisher publisher, IReadOnlyDictionary<string, string> envStore, ILogger<AzureBlobService> logger)
     {
-        var accountName = envManager["AZURE_STORAGE_ACCOUNT_NAME"];
-        var accountKey = envManager["AZURE_STORAGE_ACCOUNT_KEY"];
-        var containerName = envManager["AZURE_STORAGE_CONTAINER_NAME"];
+        var accountName = envStore["AZURE_STORAGE_ACCOUNT_NAME"];
+        var accountKey = envStore["AZURE_STORAGE_ACCOUNT_KEY"];
+        var containerName = envStore["AZURE_STORAGE_CONTAINER_NAME"];
 
         var connectionString = $"DefaultEndpointsProtocol=https;AccountName={accountName};AccountKey={accountKey};EndpointSuffix=core.windows.net";
 
         _containerClient = new BlobContainerClient(connectionString, containerName);
         _eventPublisher = publisher;
-        _envManager = envManager;
+        _envStore = envStore;
+        _logger = logger;
     }
 
     public IEnumerable<string> FetchBlobNames()
     {
-        _eventPublisher.Publish("test", "Fetching blob names");
         return _containerClient.GetBlobs().Select(item => item.Name);
     }
 
@@ -56,14 +57,13 @@ public class AzureBlobService : IAzureBlobService
 
     public async void Delete(string name)
     {
+        _logger.LogInformation("Deleting resource with name '{}'...", name);
         var result = await _containerClient.DeleteBlobIfExistsAsync(name);
         if (result.Value) 
         {
-            var uri = new UriBuilder(_envManager["REDIRECT_URI"])
-            {
-                Path = name
-            };
+            var uri = $"{_envStore["REDIRECT_URI"]}/{Uri.EscapeDataString(name)}";
             _eventPublisher.Publish("deleted-blobs", uri);
+            _logger.LogInformation("Published deleted resource uri '{}'", uri);
         }
     }
 }

@@ -19,8 +19,8 @@ var requiredVariables = new List<string>
     "KC_JWKS_URL",      // To validate tokens from keycloak
 };
 
-var envManager = new EnvironmentVariableManager(requiredVariables);
-builder.Services.AddSingleton(envManager);
+var envStore = new EnvStore(requiredVariables);
+builder.Services.AddSingleton<IReadOnlyDictionary<string, string>>(envStore);
 
 // Logging
 builder.Logging.ClearProviders();
@@ -34,7 +34,7 @@ builder.WebHost.ConfigureKestrel(options =>
 
 
 // CORS
-string[] allowedOrigins = envManager["ALLOWED_ORIGINS"].Split(',');
+string[] allowedOrigins = envStore["ALLOWED_ORIGINS"].Split(',');
 string corsPolicy = "frontend";
 builder.Services.AddCors(options =>
 {

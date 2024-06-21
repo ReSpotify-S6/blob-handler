@@ -3,13 +3,13 @@ using System.Collections.ObjectModel;
 
 namespace BlobHandler;
 
-public class EnvironmentVariableManager : IReadOnlyDictionary<string, string>
+public class EnvStore : IReadOnlyDictionary<string, string>
 {
     private ReadOnlyDictionary<string, string> _environmentVariables;
 
     public IReadOnlyDictionary<string, string> EnvironmentVariables => _environmentVariables;
 
-    public EnvironmentVariableManager(IEnumerable<string> requiredVariables)
+    public EnvStore(IEnumerable<string> requiredVariables)
     {
         var missingVariables = new List<string>();
         var environmentVariables = new Dictionary<string, string>();

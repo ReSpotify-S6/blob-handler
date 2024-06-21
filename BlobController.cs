@@ -8,12 +8,12 @@ namespace BlobHandler;
 [ApiController]
 [Route("")]
 [Allow("administrator")]
-public class BlobController(IAzureBlobService blobService, ILogger<BlobController> logger, EnvironmentVariableManager envManager) : ControllerBase
+public class BlobController(IAzureBlobService blobService, ILogger<BlobController> logger, IReadOnlyDictionary<string, string> envStore) : ControllerBase
 {
     [HttpGet]
     public IActionResult FetchBlobs()
     {
-        var redirectUri = envManager["REDIRECT_URI"];
+        var redirectUri = envStore["REDIRECT_URI"];
 
         var names = blobService.FetchBlobNames();
 
@@ -24,8 +24,6 @@ public class BlobController(IAzureBlobService blobService, ILogger<BlobControlle
     public async Task<IActionResult> Download(string name)
     {
         var stream = await blobService.DownloadAsync(name);
-
-        logger.LogInformation("A resource was requested with name '{}'", name);
 
         if (stream == null)
         {
@@ -77,7 +75,7 @@ public class BlobController(IAzureBlobService blobService, ILogger<BlobControlle
             };
         }
 
-        string redirectUri = envManager["REDIRECT_URI"];
+        string redirectUri = envStore["REDIRECT_URI"];
 
         var uriBuilder = new UriBuilder(redirectUri)
         {
