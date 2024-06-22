@@ -53,6 +53,7 @@ builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
 builder.Services.AddSingleton<IEventPublisher, EventPublisher>();
 builder.Services.AddSingleton<IKeycloakJwtHandler, KeycloakJwtHandler>();
 
+builder.Services.AddHealthChecks();
 var app = builder.Build();
 
 app.UseCors(corsPolicy);
@@ -62,5 +63,7 @@ app.MapControllers();
 app.UseAuthorization();
 
 app.UseMiddleware<AuthMiddleware>();
+
+app.MapHealthChecks("/healthz");
 
 app.Run();
