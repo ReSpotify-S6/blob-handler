@@ -13,7 +13,6 @@ public class Allow(params string[] roles) : Attribute, IAuthorizationFilter
         var roles = context.HttpContext.Items["roles"] as IEnumerable<string> ?? [];
         if (!_roles.All(r => roles.Contains(r)))
         {
-            Console.WriteLine(string.Join(',', roles));
             context.Result = new StatusCodeResult(403);
         }
     }

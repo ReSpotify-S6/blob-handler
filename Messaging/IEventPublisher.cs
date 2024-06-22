@@ -1,8 +1,6 @@
-﻿namespace BlobHandler.Messaging
+﻿namespace BlobHandler.Messaging;
+
+public interface IEventPublisher
 {
-    public interface IEventPublisher
-    {
-        void Dispose();
-        void Publish<T>(string topic, T data);
-    }
+    void Publish<T>(string topic, T data);
 }

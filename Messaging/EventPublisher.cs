@@ -4,7 +4,7 @@ using System.Text;
 
 namespace BlobHandler.Messaging;
 
-public class EventPublisher : IDisposable, IEventPublisher
+public class EventPublisher : IEventPublisher, IDisposable
 {
     private readonly IConnection _connection;
 
@@ -37,6 +37,7 @@ public class EventPublisher : IDisposable, IEventPublisher
         }
     }
 
+
     public void Publish<T>(string topic, T data)
     {
         using var channel = _connection.CreateModel();
@@ -57,7 +58,9 @@ public class EventPublisher : IDisposable, IEventPublisher
 
     public void Dispose()
     {
+        _connection.Dispose();
         GC.SuppressFinalize(this);
-        _connection.Close();
     }
+
+
 }

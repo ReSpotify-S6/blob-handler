@@ -41,8 +41,8 @@ public class KeycloakJwtHandler(ILogger<KeycloakJwtHandler> logger, IReadOnlyDic
 
     private async Task<IEnumerable<SecurityKey>> FetchKeysAsync()
     {
-        var handler = new HttpClientHandler();
-        var httpClient = new HttpClient(handler);
+        using var handler = new HttpClientHandler();
+        using var httpClient = new HttpClient(handler);
         var jwksUrl = envStore["KC_JWKS_URL"];
 
         var response = await httpClient.GetAsync(jwksUrl);
