@@ -1,47 +1,12 @@
-name: Blob handler pipeline
+name: Deployment pipeline
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
-  analyze:
-    name: Static code analysis
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        
-    - name: SonarCloud Scan
-      uses: sonarsource/sonarcloud-github-action@v2.2.0
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  vulnerability-scan:
-    name: Vulnerability scan
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Run Snyk to check for vulnerabilities
-      uses: snyk/actions/dotnet@master
-      env:
-         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-         args: --file=BlobHandler.sln
-
   deploy:
     name: Deployment
-    needs: [vulnerability-scan, analyze]
     runs-on: ubuntu-latest
     defaults:
       run:
